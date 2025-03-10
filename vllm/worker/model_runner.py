@@ -24,8 +24,8 @@ from vllm.attention.backends.utils import CommonAttentionState
 from vllm.config import CompilationLevel, VllmConfig
 from vllm.control_vectors.layers import ControlVectorMapping
 from vllm.control_vectors.request import ControlVectorRequest
-from vllm.control_vectors.worker_manager import (
-    LRUCacheWorkerControlVectorManager)
+from vllm.control_vectors.worker_manager import \
+    LRUCacheWorkerControlVectorManager
 from vllm.core.scheduler import SchedulerOutputs
 from vllm.distributed import get_kv_transfer_group, get_pp_group
 from vllm.distributed.parallel_state import (get_tensor_model_parallel_rank,
@@ -48,8 +48,8 @@ from vllm.multimodal import (MULTIMODAL_REGISTRY, BatchedTensorInputs,
                              MultiModalRegistry)
 from vllm.prompt_adapter.layers import PromptAdapterMapping
 from vllm.prompt_adapter.request import PromptAdapterRequest
-from vllm.prompt_adapter.worker_manager import (
-    LRUCacheWorkerPromptAdapterManager)
+from vllm.prompt_adapter.worker_manager import \
+    LRUCacheWorkerPromptAdapterManager
 from vllm.sampling_params import SamplingParams
 from vllm.sequence import IntermediateTensors, SequenceGroupMetadata
 from vllm.utils import (DeviceMemoryProfiler, GiB_bytes, PyObjectCache,
@@ -390,6 +390,8 @@ class ModelInputForGPUBuilder(ModelRunnerInputBuilderBase[ModelInputForGPU]):
 
             self.multi_modal_kwargs = multi_modal_kwargs
             self.multi_modal_placeholder_maps = multi_modal_placeholder_maps
+
+            self.control_vector_request = control_vector_request
 
             self.prefix_cache_hit = prefix_cache_hit
 
