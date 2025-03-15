@@ -29,8 +29,8 @@ from vllm.entrypoints.openai.serving_engine import (OpenAIServing,
                                                     clamp_prompt_logprobs)
 from vllm.entrypoints.openai.serving_models import OpenAIServingModels
 from vllm.entrypoints.openai.tool_parsers import ToolParser, ToolParserManager
-from vllm.entrypoints.openai.tool_parsers.mistral_tool_parser import (
-    MistralToolCall)
+from vllm.entrypoints.openai.tool_parsers.mistral_tool_parser import \
+    MistralToolCall
 from vllm.logger import init_logger
 from vllm.outputs import CompletionOutput, RequestOutput
 from vllm.sampling_params import BeamSearchParams, SamplingParams
@@ -143,9 +143,11 @@ class OpenAIServingChat(OpenAIServing):
             (
                 lora_request,
                 prompt_adapter_request,
+                control_vector_request,
             ) = self._maybe_get_adapters(request)
 
-            model_name = self._get_model_name(request.model, lora_request)
+            model_name = self.models.model_name(lora_request,
+                                                control_vector_request)
 
             tokenizer = await self.engine_client.get_tokenizer(lora_request)
 
@@ -237,7 +239,8 @@ class OpenAIServingChat(OpenAIServing):
                                  request_prompts[i],
                                  params=sampling_params,
                                  lora_request=lora_request,
-                                 prompt_adapter_request=prompt_adapter_request)
+                                 prompt_adapter_request=prompt_adapter_request,
+                                 control_vector_request=control_vector_request)
 
                 trace_headers = (None if raw_request is None else await
                                  self._get_trace_headers(raw_request.headers))
@@ -256,6 +259,7 @@ class OpenAIServingChat(OpenAIServing):
                         lora_request=lora_request,
                         trace_headers=trace_headers,
                         prompt_adapter_request=prompt_adapter_request,
+                        control_vector_request=control_vector_request,
                         priority=request.priority,
                     )
 

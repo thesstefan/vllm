@@ -49,7 +49,8 @@ class RPCProcessRequest:
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
         control_vector_request: Optional[ControlVectorRequest] = None,
         priority: int = 0,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     @deprecated("'inputs' will be renamed to 'prompt")
@@ -64,30 +65,30 @@ class RPCProcessRequest:
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
         control_vector_request: Optional[ControlVectorRequest] = None,
         priority: int = 0,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @deprecate_kwargs(
         "inputs",
         additional_message="Please use the 'prompt' parameter instead.",
     )
     def __init__(
-        self,
-        prompt: Optional[PromptType] = None,
-        params: Optional[Union[SamplingParams, PoolingParams]] = None,
-        request_id: Optional[str] = None,
-        lora_request: Optional[LoRARequest] = None,
-        trace_headers: Optional[Mapping[str, str]] = None,
-        prompt_adapter_request: Optional[PromptAdapterRequest] = None,
-        control_vector_request: Optional[ControlVectorRequest] = None,
-        priority: int = 0,
-        *,
-        inputs: Optional[PromptType] = None,  # DEPRECATED
+            self,
+            prompt: Optional[PromptType] = None,
+            params: Optional[Union[SamplingParams, PoolingParams]] = None,
+            request_id: Optional[str] = None,
+            lora_request: Optional[LoRARequest] = None,
+            trace_headers: Optional[Mapping[str, str]] = None,
+            prompt_adapter_request: Optional[PromptAdapterRequest] = None,
+            control_vector_request: Optional[ControlVectorRequest] = None,
+            priority: int = 0,
+            *,
+            inputs: Optional[PromptType] = None,  # DEPRECATED
     ) -> None:
         if inputs is not None:
             prompt = inputs
-        assert (
-            prompt is not None and params is not None and request_id is not None
-        )
+        assert (prompt is not None and params is not None
+                and request_id is not None)
 
         super().__init__()
 
@@ -176,38 +177,30 @@ class RPCControlVectorLoadedResponse:
     request_id: str
 
 
-RPC_REQUEST_T = Union[
-    RPCProcessRequest,
-    RPCAbortRequest,
-    RPCStartupRequest,
-    RPCUProfileRequest,
-    RPCLoadAdapterRequest,
-    RPCResetPrefixCacheRequest,
-    RPCSleepRequest,
-    RPCIsSleepingRequest,
-    RPCWakeUpRequest,
-    RPCLoadControlVectorRequest,
-]
+RPC_REQUEST_T = Union[RPCProcessRequest, RPCAbortRequest, RPCStartupRequest,
+                      RPCUProfileRequest, RPCLoadAdapterRequest,
+                      RPCResetPrefixCacheRequest, RPCSleepRequest,
+<<<<<<< HEAD
+                      RPCWakeUpRequest, RPCIsSleepingRequest]
 
-REQUEST_OUTPUTS_T = Union[
-    List[RequestOutput],
-    RPCAdapterLoadedResponse,
-    RPCIsSleepingRequest,
-    RPCControlVectorLoadedResponse,
-    RPCError,
-]
+REQUEST_OUTPUTS_T = Union[List[RequestOutput], RPCAdapterLoadedResponse,
+                          RPCIsSleepingResponse, RPCError]
+=======
+                      RPCWakeUpRequest,
+                      RPCResetPrefixCacheRequest, RPCLoadControlVectorRequest]
+
+REQUEST_OUTPUTS_T = Union[List[RequestOutput], RPCAdapterLoadedResponse,
+                          RPCControlVectorLoadedResponse, RPCError]
+>>>>>>> steering_fork/add-api-support-for-cv
 
 
 def ENGINE_DEAD_ERROR(
-    error: Optional[BaseException] = None,
-) -> MQEngineDeadError:
+        error: Optional[BaseException] = None) -> MQEngineDeadError:
     if error is None:
         return MQEngineDeadError(
             "Engine loop is not running. Inspect the stacktrace to "
-            "find the original error"
-        )
+            "find the original error")
 
     return MQEngineDeadError(
         "Engine loop is not running. Inspect the stacktrace to "
-        f"find the original error: {repr(error)}."
-    )
+        f"find the original error: {repr(error)}.")
