@@ -3310,10 +3310,16 @@ class PromptAdapterConfig:
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class ControlVectorConfig:
     max_control_vectors: int = 0
+    """Maximum number of control vectors stored in the cache."""
+
     adapter_dtype: Optional[torch.dtype] = torch.float16
+    """Data type for control vectors. If None, will default to base model dtype."""
+
     normalize: bool = False
+    """Whether to normalize the control vectors. If None, will default to False."""
 
     def __post_init__(self):
+        """Post-initialization checks for ControlVectorConfig."""
         if self.max_control_vectors < 1:
             raise ValueError("max_control_vectors must be >= 1")
 
