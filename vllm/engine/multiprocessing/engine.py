@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 import pickle
 import signal
@@ -14,34 +15,29 @@ from vllm.engine.llm_engine import LLMEngine
 
 # yapf conflicts with isort for this block
 # yapf: disable
-from vllm.engine.multiprocessing import (
-    ENGINE_DEAD_ERROR,
-    IPC_DATA_EXT,
-    IPC_HEALTH_EXT,
-    IPC_INPUT_EXT,
-    IPC_OUTPUT_EXT,
-    REQUEST_OUTPUTS_T,
-    VLLM_RPC_SUCCESS_STR,
-    RPCAbortRequest,
-    RPCAdapterLoadedResponse,
-    RPCControlVectorLoadedResponse,
-    RPCError,
-    RPCIsSleepingRequest,
-    RPCIsSleepingResponse,
-    RPCLoadAdapterRequest,
-    RPCLoadControlVectorRequest,
-    RPCProcessRequest,
-    RPCResetPrefixCacheRequest,
-    RPCSleepRequest,
-    RPCStartupRequest,
-    RPCStartupResponse,
-    RPCUProfileRequest,
-    RPCWakeUpRequest,
-)
+
+from vllm.engine.multiprocessing import (ENGINE_DEAD_ERROR, IPC_DATA_EXT,
+                                         IPC_HEALTH_EXT, IPC_INPUT_EXT,
+                                         IPC_OUTPUT_EXT, REQUEST_OUTPUTS_T,
+                                         VLLM_RPC_SUCCESS_STR, RPCAbortRequest,
+                                         RPCAdapterLoadedResponse, 
+                                            RPCControlVectorLoadedResponse,
+                                         RPCError,
+                                         RPCIsSleepingRequest,
+                                         RPCIsSleepingResponse,
+                                         RPCLoadAdapterRequest,
+                                         RPCProcessRequest,
+                                         RPCResetMultiModalCacheRequest,
+                                         RPCResetPrefixCacheRequest,
+                                         RPCSleepRequest, RPCStartupRequest,
+                                         RPCStartupResponse,
+                                         RPCUProfileRequest, RPCWakeUpRequest)
 
 # yapf: enable
 from vllm.logger import init_logger
 from vllm.outputs import RequestOutput
+from vllm.transformers_utils.config import (
+    maybe_register_config_serialize_by_value)
 from vllm.usage.usage_lib import UsageContext
 from vllm.worker.model_runner_base import InputProcessingError
 
@@ -52,19 +48,22 @@ HEALTHY_RESPONSE = (pickle.dumps(VLLM_RPC_SUCCESS_STR),)
 
 
 class MQLLMEngine:
-    """A multiprocessing wrapper for :class:`LLMEngine`.
+    """A multiprocessing wrapper for
+    [`LLMEngine`][vllm.engine.llm_engine.LLMEngine].
 
-    This class is used to wrap the :class:`LLMEngine` class to enable use
+    This class is used to wrap the
+    [`LLMEngine`][vllm.engine.llm_engine.LLMEngine] class to enable use
     in concurrnet manner. It runs a background loop and uses zeromq to
     receive new requests and stream outputs incrementally via ipc.
 
-    The :class:`LLMEngine` generate or encode process is kicked off when a new
-    RPCProcessRequest is received by the input_socket.
+    The [`LLMEngine`][vllm.engine.llm_engine.LLMEngine] generate or encode
+    process is kicked off when a new RPCProcessRequest is received by the
+    input_socket.
 
     The self.engine_loop checks the input_socket for new requests,
     adds them to the LLMEngine if there are any, calls the internal
-    :class:`LLMEngine.step()`, and sends the RequestOutputs back over
-    the output_socket.
+    [`LLMEngine.step()`][vllm.engine.llm_engine.LLMEngine.step], and sends
+    the RequestOutputs back over the output_socket.
 
     If use_async_sockets is set, the logic associated with reading new
     requests from the socket and sending data to the socket is passed
@@ -75,8 +74,8 @@ class MQLLMEngine:
         ipc_path: Base path for zeromq interprocess messaging
         use_async_sockets: Whether to make send/recv async with GPU
         log_requests: Whether to log the requests.
-        *args: Arguments for :class:`LLMEngine`.
-        **kwargs: Arguments for :class:`LLMEngine`.
+        *args: Arguments for [`LLMEngine`][vllm.engine.llm_engine.LLMEngine].
+        **kwargs: Arguments for [`LLMEngine`][vllm.engine.llm_engine.LLMEngine].
     """
 
     def __init__(
@@ -294,12 +293,14 @@ class MQLLMEngine:
                     self._handle_load_adapter_request(request)
                 elif isinstance(request, RPCLoadControlVectorRequest):
                     self._handle_load_control_vector_request(request)
+                elif isinstance(request, RPCResetMultiModalCacheRequest):
+                    self.reset_mm_cache()
                 elif isinstance(request, RPCResetPrefixCacheRequest):
                     self.reset_prefix_cache()
                 elif isinstance(request, RPCSleepRequest):
                     self.sleep(request.value)
                 elif isinstance(request, RPCWakeUpRequest):
-                    self.wake_up()
+                    self.wake_up(request.tags)
                 elif isinstance(request, RPCIsSleepingRequest):
                     self._handle_is_sleeping_request(request)
                 else:
@@ -310,7 +311,7 @@ class MQLLMEngine:
         except Exception as e:
             self._set_errored(e)
             self._send_unhealthy(e)
-            raise e
+            raise e from None
 
     def _handle_process_request(self, request: RPCProcessRequest):
         """Handle RPCProcessRequest by adding it to the LLMEngine."""
@@ -464,14 +465,17 @@ class MQLLMEngine:
     def stop_profile(self) -> None:
         self.engine.stop_profile()
 
+    def reset_mm_cache(self) -> bool:
+        return self.engine.reset_mm_cache()
+
     def reset_prefix_cache(self) -> bool:
         return self.engine.reset_prefix_cache()
 
     def sleep(self, level: int = 1) -> None:
         self.engine.sleep(level)
 
-    def wake_up(self) -> None:
-        self.engine.wake_up()
+    def wake_up(self, tags: Optional[list[str]] = None) -> None:
+        self.engine.wake_up(tags)
 
     def is_sleeping(self) -> bool:
         return self.engine.is_sleeping()
@@ -490,6 +494,9 @@ def run_mp_engine(
     engine_alive,
 ):
     try:
+        # Ensure we can serialize transformer config before spawning
+        maybe_register_config_serialize_by_value()
+
         engine = MQLLMEngine.from_vllm_config(
             vllm_config=vllm_config,
             usage_context=usage_context,
@@ -505,4 +512,4 @@ def run_mp_engine(
     except BaseException as e:
         logger.exception(e)
         engine_alive.value = False
-        raise e
+        raise e from None

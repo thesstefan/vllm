@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 from typing import Optional, Union
+
+import torch
 
 from vllm.control_vectors.request import ControlVectorRequest
 from vllm.logger import init_logger
@@ -13,7 +16,6 @@ logger = init_logger(__name__)
 
 
 class RequestLogger:
-
     def __init__(self, *, max_log_len: Optional[int]) -> None:
         super().__init__()
 
@@ -24,8 +26,10 @@ class RequestLogger:
         request_id: str,
         prompt: Optional[str],
         prompt_token_ids: Optional[list[int]],
-        params: Optional[Union[SamplingParams, PoolingParams,
-                               BeamSearchParams]],
+        prompt_embeds: Optional[torch.Tensor],
+        params: Optional[
+            Union[SamplingParams, PoolingParams, BeamSearchParams]
+        ],
         lora_request: Optional[LoRARequest],
         prompt_adapter_request: Optional[PromptAdapterRequest],
         control_vector_request: Optional[ControlVectorRequest],
@@ -41,7 +45,15 @@ class RequestLogger:
         logger.info(
             "Received request %s: prompt: %r, "
             "params: %s, prompt_token_ids: %s, "
+            "prompt_embeds shape: %s, "
             "lora_request: %s, prompt_adapter_request: %s, "
-            "control_vector_request: %s.", request_id, prompt, params,
-            prompt_token_ids, lora_request, prompt_adapter_request,
-            control_vector_request)
+            "control_vector_request: %s.",
+            request_id,
+            prompt,
+            params,
+            prompt_token_ids,
+            prompt_embeds.shape if prompt_embeds is not None else None,
+            lora_request,
+            prompt_adapter_request,
+            control_vector_request,
+        )
