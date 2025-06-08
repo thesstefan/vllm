@@ -3307,12 +3307,11 @@ class PromptAdapterConfig:
 
 
 @config
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class ControlVectorConfig:
     max_control_vectors: int
     adapter_dtype: Optional[torch.dtype] = torch.float16
     normalize: bool = False
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __post_init__(self):
         if self.max_control_vectors < 1:
