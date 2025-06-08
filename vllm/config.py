@@ -3309,7 +3309,7 @@ class PromptAdapterConfig:
 @config
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class ControlVectorConfig:
-    max_control_vectors: int
+    max_control_vectors: int = 0
     adapter_dtype: Optional[torch.dtype] = torch.float16
     normalize: bool = False
 
