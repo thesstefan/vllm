@@ -4629,8 +4629,9 @@ class VllmConfig:
     observability_config: Optional[ObservabilityConfig] = None
     """Observability configuration."""
     prompt_adapter_config: Optional[PromptAdapterConfig] = None
-    control_vector_config: Optional[ControlVectorConfig] = None
     """Prompt adapter configuration."""
+    control_vector_config: Optional[ControlVectorConfig] = None
+    """Control vector configuration."""
     quant_config: Optional[QuantizationConfig] = None
     """Quantization configuration."""
     compilation_config: CompilationConfig = field(
